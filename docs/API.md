@@ -1551,17 +1551,17 @@ curl -s "https://tools4foresight.com/api/public/v1/snapshots/f2c81d47-6b39-4e05-
     ],
     "members": [
       {
-        "signalId": "c7f3a914-20bc-4d4c-9c51-940f372e0d8a",
+        "itemId": "c7f3a914-20bc-4d4c-9c51-940f372e0d8a",
         "themeId": "4e9b1c72-8a30-4f11-b8d6-2c5a7e0d91f4",
         "vitality": 0.87
       },
       {
-        "signalId": "9b21e0d4-5f7a-4c88-91b3-6ea0c4f27d15",
+        "itemId": "9b21e0d4-5f7a-4c88-91b3-6ea0c4f27d15",
         "themeId": "4e9b1c72-8a30-4f11-b8d6-2c5a7e0d91f4",
         "vitality": 0.74
       },
       {
-        "signalId": "7e40b28c-13da-4f57-9c86-05b1e9a37d24",
+        "itemId": "7e40b28c-13da-4f57-9c86-05b1e9a37d24",
         "themeId": null,
         "vitality": 0.19
       }
@@ -1837,7 +1837,7 @@ export type SnapshotThemeRowDTO = {
 };
 
 export type SnapshotMemberDTO = {
-  signalId: string;
+  itemId: string;
   /** null = señal huérfana en esa corrida. */
   themeId: string | null;
   vitality: number;
