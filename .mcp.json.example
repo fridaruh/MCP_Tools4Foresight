@@ -1,0 +1,22 @@
+{
+  "//": "Copia el bloque que necesites a tu configuración de MCP.",
+  "mcpServers": {
+    "tools4foresight": {
+      "//": "Local por stdio: lo más simple, no requiere desplegar nada.",
+      "command": "npx",
+      "args": ["-y", "mcp-tools4foresight"],
+      "env": {
+        "T4F_API_BASE_URL": "https://tools4foresight.com/api/public/v1",
+        "T4F_API_KEY": "tu-api-key-de-tools4foresight"
+      }
+    },
+    "tools4foresight-remoto": {
+      "//": "HTTP remoto: apunta a tu despliegue. MCP_ACCESS_TOKEN es la clave de ESTE servidor, no la de la API.",
+      "type": "http",
+      "url": "https://tu-despliegue.vercel.app/api/mcp",
+      "headers": {
+        "Authorization": "Bearer tu-mcp-access-token"
+      }
+    }
+  }
+}
