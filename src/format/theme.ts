@@ -1,6 +1,8 @@
 // Capa de formato — temas, horizontes, macro-temas, grafo y snapshots
 // (docs/PLAN.md §2.6). Funciones puras: DTO -> markdown en español.
 import {
+  externalBlock,
+  externalInline,
   formatDate,
   formatDateTime,
   formatEstimatedDate,
@@ -29,18 +31,21 @@ import type {
 /** Ficha corta de un tema: para listados y para las referencias dentro de un macro-tema/horizonte. */
 export function formatThemeSummary(theme: ThemeSummaryDTO): string {
   const lines: string[] = [];
-  lines.push(`### ${theme.name}`);
+  // El nombre y el resumen de un tema los redacta un modelo a partir del texto
+  // de las señales que lo forman: son, indirectamente, contenido de terceros
+  // (ver shared.ts). Se tratan igual que el texto original.
+  lines.push(`### ${externalInline(theme.name)}`);
   lines.push('');
   lines.push(`- **id**: \`${theme.id}\``);
   lines.push(`- **Estado**: ${formatThemeStatus(theme.status)}`);
   lines.push(`- **Horizonte**: ${formatHorizonLabel(theme.horizon)}`);
   lines.push(`- **Tamaño**: ${theme.size} señales`);
   lines.push(`- **Vitalidad**: ${formatVitality(theme.vitality)}`);
-  if (theme.macroTheme) lines.push(`- **Macro-tema**: ${theme.macroTheme.name}`);
+  if (theme.macroTheme) lines.push(`- **Macro-tema**: ${externalInline(theme.macroTheme.name)}`);
   // ESTIMADA: es el `likedAt` de la señal más reciente del tema.
   if (theme.lastSignalAt) lines.push(`- **Última señal**: ${formatEstimatedDate(theme.lastSignalAt)}`);
   lines.push('');
-  lines.push(theme.summary);
+  lines.push(externalBlock(theme.summary));
   return lines.join('\n');
 }
 
@@ -99,7 +104,7 @@ function formatHistoricalStatus(status: string): string {
  */
 export function formatThemeHistory(history: ThemeHistoryDTO): string {
   if (history.points.length === 0) return 'Sin puntos históricos para este tema en el rango pedido.';
-  const title = history.points[0]?.name ?? history.themeId;
+  const title = externalInline(history.points[0]?.name ?? history.themeId);
   const rows = history.points.map((point) => {
     const status = formatHistoricalStatus(point.status);
     return `- ${formatDateTime(point.takenAt)} (${point.trigger}): tamaño ${point.size}, ${status}, ${formatVitality(point.vitality)}, velocidad ${point.velocity30d}, ${formatHorizonLabel(point.horizon)}`;
@@ -114,7 +119,7 @@ export function formatThemeHistory(history: ThemeHistoryDTO): string {
 function formatHorizonMacroThemesBlock(macroThemes: readonly MacroThemeDTO[]): string[] {
   if (macroThemes.length === 0) return [];
   const lines = ['', '**Macro-temas**'];
-  for (const macro of macroThemes) lines.push(`- ${macro.name}`);
+  for (const macro of macroThemes) lines.push(`- ${externalInline(macro.name)}`);
   return lines;
 }
 
@@ -137,7 +142,7 @@ export function formatHorizon(horizon: HorizonDetailDTO): string {
   ];
   if (horizon.themes.length > 0) {
     lines.push('', '**Temas**');
-    for (const theme of horizon.themes) lines.push(`- ${theme.name} — ${formatVitality(theme.vitality)}`);
+    for (const theme of horizon.themes) lines.push(`- ${externalInline(theme.name)} — ${formatVitality(theme.vitality)}`);
   }
   return lines.join('\n');
 }
@@ -174,16 +179,16 @@ export function formatHorizonsOverview(data: readonly HorizonDTO[], meta: ApiMet
  */
 export function formatMacroTheme(macro: MacroThemeDTO): string {
   const lines = [
-    `### ${macro.name}`,
+    `### ${externalInline(macro.name)}`,
     '',
     `- **id**: \`${macro.id}\` _(no estable entre corridas — no lo guardes)_`,
     `- **Horizonte**: ${formatHorizonLabel(macro.horizon)}`,
     '',
-    macro.summary,
+    externalBlock(macro.summary),
   ];
   if (macro.themes.length > 0) {
     lines.push('', '**Temas**');
-    for (const theme of macro.themes) lines.push(`- ${theme.name} — ${formatVitality(theme.vitality)}`);
+    for (const theme of macro.themes) lines.push(`- ${externalInline(theme.name)} — ${formatVitality(theme.vitality)}`);
   }
   return lines.join('\n');
 }
@@ -235,7 +240,7 @@ export function formatSnapshot(snapshot: SnapshotDetailDTO, meta?: ApiMeta): str
   if (snapshot.themes.length > 0) {
     lines.push('', '**Temas en esta corrida**');
     for (const theme of snapshot.themes) {
-      lines.push(`- ${theme.name}: ${formatHistoricalStatus(theme.status)}, ${formatVitality(theme.vitality)}`);
+      lines.push(`- ${externalInline(theme.name)}: ${formatHistoricalStatus(theme.status)}, ${formatVitality(theme.vitality)}`);
     }
   }
 

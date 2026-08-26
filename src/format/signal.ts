@@ -2,6 +2,8 @@
 // Funciones puras: DTO -> markdown en español. El `structuredContent` (el DTO
 // crudo) lo arma la tool que llama a estas funciones, no este archivo.
 import {
+  externalBlock,
+  externalInline,
   formatDate,
   formatEstimatedDate,
   formatHorizonLabel,
@@ -19,11 +21,17 @@ function formatThemeLine(theme: SignalSummaryDTO['theme']): string {
 /** Ficha corta de una señal: para listados y para el lado "señal" de un vecino. */
 export function formatSignalSummary(signal: SignalSummaryDTO): string {
   const lines: string[] = [];
-  lines.push(`### ${signal.title}`);
+  // Título, autor y TL;DR son texto de un tercero (ver shared.ts): el título va
+  // aplanado —está dentro de un encabezado— y el TL;DR, delimitado.
+  lines.push(`### ${externalInline(signal.title)}`);
   lines.push('');
   lines.push(`- **id**: \`${signal.id}\``);
   lines.push(
-    `- **Autor**: ${signal.authorName ? `${signal.authorName} (@${signal.authorHandle})` : `@${signal.authorHandle}`}`,
+    `- **Autor**: ${
+      signal.authorName
+        ? `${externalInline(signal.authorName)} (@${externalInline(signal.authorHandle)})`
+        : `@${externalInline(signal.authorHandle)}`
+    }`,
   );
   // ESTIMADA: siempre con virgulilla (§3.3 del contrato, glossary.ts:likedAt).
   lines.push(`- **Guardado**: ${formatEstimatedDate(signal.likedAt)}`);
@@ -33,7 +41,7 @@ export function formatSignalSummary(signal: SignalSummaryDTO): string {
   lines.push(`- **Tema**: ${formatThemeLine(signal.theme)}`);
   if (signal.tldr) {
     lines.push('');
-    lines.push(signal.tldr);
+    lines.push(externalBlock(signal.tldr));
   }
   lines.push('');
   lines.push(signal.url);
@@ -47,13 +55,13 @@ export function formatSignalDetail(signal: SignalDetailDTO): string {
   if (signal.whyMatters) {
     lines.push('**Por qué importa**');
     lines.push('');
-    lines.push(signal.whyMatters);
+    lines.push(externalBlock(signal.whyMatters));
     lines.push('');
   }
   if (signal.impact) {
     lines.push('**Impacto en el desarrollo de la IA y la interacción humana**');
     lines.push('');
-    lines.push(signal.impact);
+    lines.push(externalBlock(signal.impact));
     lines.push('');
   }
 
@@ -101,7 +109,7 @@ export function formatNeighbors(data: readonly NeighborDTO[], meta: ApiMeta): st
   if (data.length === 0) return 'No hay vecinos semánticos por encima del umbral pedido.';
   const items = data.map((neighbor) => {
     const lines = [
-      `### ${neighbor.signal.title}`,
+      `### ${externalInline(neighbor.signal.title)}`,
       '',
       `- **id**: \`${neighbor.signal.id}\``,
       `- **Cercanía**: ${STRENGTH_LABELS_ES[neighbor.strength]}`,

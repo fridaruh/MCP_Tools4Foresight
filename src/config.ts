@@ -65,6 +65,22 @@ const configSchema = z.object({
       },
       { message: `T4F_API_BASE_URL no es una URL válida. Ejemplo correcto: "${DEFAULT_BASE_URL}".` },
     )
+    // HTTPS obligatorio fuera de localhost: por esta URL viaja la cabecera
+    // `Authorization: Bearer <T4F_API_KEY>` en cada petición, y una clave de
+    // suscripción en claro por la red es una clave comprometida. Se permite
+    // http contra localhost/127.0.0.1 para desarrollar contra la app en local.
+    .refine(
+      (value) => {
+        try {
+          const url = new URL(value);
+          if (url.protocol === 'https:') return true;
+          return url.protocol === 'http:' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1');
+        } catch {
+          return false;
+        }
+      },
+      { message: 'T4F_API_BASE_URL debe usar https:// (solo se permite http:// contra localhost). La API key viaja en cada petición por esa URL.' },
+    )
     .transform(normalizeBaseUrl),
   apiKey: z
     .string({ error: MISSING_API_KEY_MESSAGE })
