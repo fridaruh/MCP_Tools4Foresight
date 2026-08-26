@@ -1,5 +1,9 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "echo 'sin build: api/mcp.ts lo compila el runtime de funciones'",
+  "outputDirectory": ".",
   "functions": {
-    "api/mcp.ts": { "maxDuration": 60, "memory": 1024 }
+    "api/mcp.ts": { "maxDuration": 60 }
   }
 }

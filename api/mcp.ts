@@ -10,14 +10,35 @@
  *
  * `runtime: nodejs` y no edge: el SDK usa APIs de Node.
  */
+import type { IncomingMessage, ServerResponse } from "node:http";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { loadConfig } from "../src/config.js";
 import { createServer } from "../src/server.js";
 import { authFailureResponse, checkAccessToken } from "../src/http-auth.js";
+import { isWebRequest, toWebRequest, writeNodeResponse } from "../src/node-adapter.js";
 
 export const config = { runtime: "nodejs" };
 
-export default async function handler(request: Request): Promise<Response> {
+/**
+ * El runtime de funciones de Vercel invoca esto con la firma de Node
+ * (`req`, `res`), no con un `Request` web. `respond` es la lógica real —
+ * escrita contra la API web, como el resto del servidor— y este handler solo
+ * traduce (ver src/node-adapter.ts). Acepta las dos formas: si algún día
+ * llega un `Request` nativo, se atiende directo.
+ */
+export default async function handler(
+  incoming: Request | IncomingMessage,
+  res?: ServerResponse,
+): Promise<Response | void> {
+  if (isWebRequest(incoming)) return respond(incoming);
+
+  const request = await toWebRequest(incoming);
+  const response = await respond(request);
+  if (!res) return response;
+  await writeNodeResponse(res, response);
+}
+
+async function respond(request: Request): Promise<Response> {
   const failure = checkAccessToken(request);
   if (failure) return authFailureResponse(failure);
 

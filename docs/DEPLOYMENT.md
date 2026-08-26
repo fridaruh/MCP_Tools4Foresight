@@ -18,23 +18,25 @@ El despliegue remoto **lleva `T4F_API_KEY` dentro**. Sin `MCP_ACCESS_TOKEN`,
 cualquiera que dé con la URL tendría acceso al contenido de suscripción. Por eso
 el handler responde **503 si esa variable no está**: no arranca abierto.
 
-## 1. Dar de alta la clave en tools4foresight
+## 1. Conseguir la clave de tools4foresight
 
-En el repo `x-likes-curator`, genera una clave con etiqueta:
+La forma normal es la pantalla: entra en **tools4foresight.com/perfil →
+"Conecta tus agentes"** y genera una clave. Sale una sola vez, empieza por
+`t4f_` y va tal cual en `T4F_API_KEY`.
 
-```bash
-node -e "console.log('mcp-remoto:' + require('crypto').randomBytes(32).toString('base64url'))"
-```
+Esa clave hereda el acceso de su dueño y se revalida en CADA petición: si la
+suscripción caduca, la clave deja de funcionar sola, sin tener que revocarla.
 
-Añádela a `T4F_PUBLIC_API_KEYS` (varias separadas por coma) en las variables de
-entorno de ese proyecto en Vercel, y redespliega:
+> Alternativa para claves de servicio que no cuelgan de ninguna cuenta:
+> `T4F_PUBLIC_API_KEYS` en el entorno de `x-likes-curator`, con formato
+> `label:clave` y varias separadas por coma. El label existe para poder revocar
+> una sin tirar las demás.
 
-```bash
-vercel env add T4F_PUBLIC_API_KEYS production
-```
-
-El formato `label:clave` existe para poder **revocar una sin tirar las demás**:
-borras esa entrada de la lista y solo ese cliente pierde acceso.
+**Ojo con quién usa el despliegue remoto.** El servidor lleva UNA `T4F_API_KEY`
+dentro, así que todo el que tenga el `MCP_ACCESS_TOKEN` lee el banco con esa
+clave y contra esa cuota: no hay forma de saber quién consumió qué, y quitarle
+el acceso a uno obliga a rotar el token para todos. Si cada persona debe usar
+su propia clave, la vía es **stdio**, no esta.
 
 ## 2. Desplegar este servidor
 
@@ -53,7 +55,15 @@ vercel env add MCP_ACCESS_TOKEN production
 vercel deploy --prod
 ```
 
-`vercel.json` ya fija `maxDuration: 60` y `memory: 1024` para `api/mcp.ts`.
+`vercel.json` fija `maxDuration: 60` para `api/mcp.ts` y desactiva la
+detección de framework (`framework: null` + un `buildCommand` que no hace nada):
+sin eso, Vercel toma el `exports` del `package.json` por el arranque de un
+servidor y la función muere con *"Invalid export found in module server.js"*.
+
+El runtime invoca la función con la firma de Node (`req`, `res`), no con un
+`Request` web como el que espera el transporte MCP. `src/node-adapter.ts` hace
+de puente y acepta las dos formas, así que el handler funciona con o sin esa
+detección.
 
 ## 3. Prueba de humo
 
